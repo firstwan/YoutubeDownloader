@@ -1,5 +1,6 @@
 import argparse
 from pytube import YouTube
+from pytube.exceptions import RegexMatchError
 from moviepy.editor import AudioFileClip
 
 parser = argparse.ArgumentParser(description="Download video/audio from Youtube")
@@ -20,6 +21,7 @@ def download_video(youtube_stream):
 
 try:
     yt_obj = YouTube(args.youtube_link)
+    print("Video found. Downloading the video now.")
 
     if args.audio:
         # Download Youtube file
@@ -42,6 +44,13 @@ try:
 
         download_video(filters.get_highest_resolution())
         print("Video finish downloaded")  
-    
+
+except RegexMatchError as e:
+    print("Unable to find the Youtube video.")
+    print("Probably is a private video.")
+
 except Exception as e:
     print(e)
+    print("Youtube available stream:")
+    print("===============================")
+    print(yt_obj.streams)
