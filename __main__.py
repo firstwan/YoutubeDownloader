@@ -1,3 +1,7 @@
+import itertools
+import threading
+import time
+import sys
 import argparse
 from pytube import YouTube
 from pytube.exceptions import RegexMatchError
@@ -14,14 +18,30 @@ args = parser.parse_args()
 
 # Global variable
 DOWNLOADED_VIDEO_FILE_PATH = "DownloadedVideo"
-
+LOADING = False
 
 def download_video(youtube_stream):
     return youtube_stream.download(output_path=DOWNLOADED_VIDEO_FILE_PATH, filename=args.filename)
 
+def loading_animation():
+    for dot in itertools.cycle(['|', '/', '-', '\\']):
+        if LOADING:
+            break
+      
+        sys.stdout.write('\rSearching Video ' + dot)
+        sys.stdout.flush()
+        time.sleep(0.1)
+    
+
 try:
+    LOADING = False
+
+    t = threading.Thread(target=loading_animation)
+    t.start()
+
     yt_obj = YouTube(args.youtube_link)
-    print("Video found. Downloading the video now.")
+    LOADING = True
+    print("\rVideo found. Downloading the video now.")
 
     if args.audio:
         # Download Youtube file
@@ -29,14 +49,14 @@ try:
         download_video(filters[0])
 
         print("Video finish downloaded")
-
+        
         # Convert to MP3
         print("Converting to MP3 now....")
 
         audio_clip = AudioFileClip(f"{DOWNLOADED_VIDEO_FILE_PATH}/{args.filename or yt_obj.title}.mp4")
         audio_clip.write_audiofile(f"{DOWNLOADED_VIDEO_FILE_PATH}/{args.filename or yt_obj.title}.mp3")
         audio_clip.close()
-        print("Finish converted")
+        print("Finish converted.")
 
     else:
         # progressive=True mean that stream have both video & audio
